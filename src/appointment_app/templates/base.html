@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Appointment Manager{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Outfit', 'ui-sans-serif', 'system-ui'],
+              display: ['Cormorant Garamond', 'serif'],
+            },
+            colors: {
+              canvas: '#f6f1e8',
+              ink: '#1f2937',
+              brand: '#0f766e',
+              brandDark: '#115e59',
+              sand: '#fffaf1'
+            }
+          }
+        }
+      }
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  </head>
+  <body class="min-h-screen bg-canvas text-ink antialiased">
+    <div class="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_10%_20%,rgba(15,118,110,0.12),transparent_35%),radial-gradient(circle_at_90%_0%,rgba(217,119,6,0.12),transparent_38%)]"></div>
+
+    <header class="sticky top-0 z-40 border-b border-teal-900/10 bg-sand/85 backdrop-blur">
+      <nav class="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <a class="font-display text-3xl font-bold tracking-wide text-brandDark" href="{{ url_for('main.home') }}">RendezVous Pro</a>
+        <div class="flex flex-wrap items-center gap-2 text-sm">
+          {% if current_user.is_authenticated %}
+            {% if current_user.role == "client" %}
+              <a class="rounded-full px-3 py-1.5 text-brandDark hover:bg-teal-50" href="{{ url_for('main.companies') }}">Entreprises</a>
+            {% endif %}
+            <a class="rounded-full px-3 py-1.5 text-brandDark hover:bg-teal-50" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+            {% if current_user.role == "client" %}
+              <a class="rounded-full px-3 py-1.5 text-brandDark hover:bg-teal-50" href="{{ url_for('main.my_appointments') }}">Mes rendez-vous</a>
+            {% endif %}
+            <a class="rounded-full bg-brand px-3 py-1.5 font-medium text-white hover:bg-brandDark" href="{{ url_for('auth.logout') }}">Deconnexion</a>
+          {% else %}
+            <a class="rounded-full px-3 py-1.5 text-brandDark hover:bg-teal-50" href="{{ url_for('auth.login') }}">Connexion</a>
+            <a class="rounded-full bg-brand px-3 py-1.5 font-medium text-white hover:bg-brandDark" href="{{ url_for('auth.register') }}">Inscription</a>
+          {% endif %}
+        </div>
+      </nav>
+    </header>
+
+    <main class="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <ul class="mb-4 space-y-2">
+            {% for category, message in messages %}
+              <li class="rounded-xl border px-4 py-3 text-sm
+                {% if category == 'success' %}border-emerald-200 bg-emerald-50 text-emerald-900
+                {% elif category == 'error' %}border-rose-200 bg-rose-50 text-rose-900
+                {% elif category == 'warning' %}border-amber-200 bg-amber-50 text-amber-900
+                {% else %}border-slate-200 bg-white text-slate-800{% endif %}">
+                {{ message }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

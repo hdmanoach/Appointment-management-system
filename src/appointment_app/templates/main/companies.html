@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Entreprises{% endblock %}
+
+{% block content %}
+  <section class="rounded-2xl border border-teal-900/10 bg-sand p-6 shadow-sm">
+    <h1 class="font-display text-5xl text-brandDark">Choisir une entreprise</h1>
+    <p class="mt-2 text-slate-600">Le client selectionne l'entreprise puis accede a son calendrier dedie.</p>
+  </section>
+
+  <section class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+    {% for company in companies %}
+      <article class="rounded-2xl border border-teal-900/10 bg-white p-4 shadow-sm">
+        <h2 class="text-lg font-semibold text-slate-900">{{ company.company_name }}</h2>
+        <p class="mt-1 text-sm text-slate-600">Planning et rendez-vous isoles pour cette entreprise.</p>
+        <a class="mt-3 inline-flex rounded-full bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brandDark" href="{{ url_for('main.company_public_page', company_slug=company.public_slug) }}">Voir les creneaux</a>
+      </article>
+    {% else %}
+      <article class="rounded-2xl border border-teal-900/10 bg-white p-4 text-sm text-slate-600 shadow-sm md:col-span-2 xl:col-span-3">
+        Aucune entreprise active pour le moment.
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}

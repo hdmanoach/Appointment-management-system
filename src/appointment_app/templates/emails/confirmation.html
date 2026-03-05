@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+  <body style="margin:0;padding:0;background:#f6f6f6;font-family:Arial,sans-serif;color:#1f2937;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:24px 12px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
+            <tr>
+              <td style="background:#2f9e6f;color:#ffffff;padding:14px 18px;font-size:18px;font-weight:700;">
+                Confirmation de rendez-vous
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:18px;line-height:1.5;">
+                <p style="margin:0 0 12px;">Bonjour {{ customer_name }},</p>
+                <p style="margin:0 0 12px;">Votre rendez-vous a bien été enregistré chez <strong>{{ company_name }}</strong>.</p>
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f0fbf7;border:1px solid #b0e0d0;border-radius:10px;">
+                  <tr>
+                    <td style="padding:10px 12px;"><strong>Entreprise</strong></td>
+                    <td style="padding:10px 12px;">{{ company_name }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 12px;"><strong>Date/heure</strong></td>
+                    <td style="padding:10px 12px;">{{ start_at_str }}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:10px 12px;"><strong>Statut</strong></td>
+                    <td style="padding:10px 12px;"><span style="background:#fff0dc;padding:4px 8px;border-radius:4px;">En attente de confirmation</span></td>
+                  </tr>
+                </table>
+                <p style="margin:14px 0 0;font-size:14px;color:#6b7280;">L'entreprise va confirmer votre rendez-vous dans les meilleurs délais. Vous recevrez un email de confirmation dès que possible.</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f3f4f6;padding:12px 18px;font-size:12px;color:#6b7280;text-align:center;">
+                <p style="margin:0;">Cet email a été généré automatiquement. Merci de ne pas y répondre.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

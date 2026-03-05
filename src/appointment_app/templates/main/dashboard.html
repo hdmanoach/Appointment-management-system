@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+  {% if user.role == "company" and company_booking_link %}
+    <section class="grid gap-4 lg:h-[calc(100vh-7.5rem)] lg:grid-cols-12 lg:overflow-hidden">
+      <article class="rounded-2xl border border-teal-900/10 bg-sand p-5 shadow-sm lg:col-span-3 lg:overflow-y-auto">
+        <h1 class="font-display text-4xl text-brandDark">Espace Entreprise</h1>
+        <p class="mt-1 text-sm text-slate-600">Bienvenue {{ user.full_name }}</p>
+
+        <div class="mt-4 rounded-xl bg-white p-3 ring-1 ring-slate-200">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Lien public</p>
+          <a class="mt-2 block break-all text-sm font-medium text-brandDark underline decoration-teal-200" href="{{ company_booking_link }}">{{ company_booking_link }}</a>
+        </div>
+
+        <div class="mt-4 rounded-xl bg-white p-4 ring-1 ring-slate-200">
+          <h2 class="text-sm font-semibold text-slate-800">Ajouter une disponibilite</h2>
+          <form class="mt-3 space-y-3" method="post" action="{{ url_for('main.create_availability') }}">
+            <div>
+              <label class="mb-1 block text-xs font-semibold uppercase text-slate-500">Jour</label>
+              <select class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" name="weekday" required>
+                {% for day_number, day_label in weekday_labels.items() %}
+                  <option value="{{ day_number }}">{{ day_label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="mb-1 block text-xs font-semibold uppercase text-slate-500">Debut</label>
+                <input class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" type="time" name="start_time" required>
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-semibold uppercase text-slate-500">Fin</label>
+                <input class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" type="time" name="end_time" required>
+              </div>
+            </div>
+            <button class="w-full rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brandDark" type="submit">Ajouter</button>
+          </form>
+        </div>
+
+        <div class="mt-4 rounded-xl bg-white p-3 ring-1 ring-slate-200">
+          <h2 class="text-sm font-semibold text-slate-800">Disponibilites</h2>
+          {% if company_availabilities %}
+            <ul class="mt-2 space-y-2">
+              {% for slot in company_availabilities %}
+                <li class="rounded-lg border border-slate-200 px-3 py-2">
+                  <p class="text-sm font-medium text-slate-700">{{ weekday_labels[slot.weekday] }}</p>
+                  <p class="text-xs text-slate-500">{{ slot.start_time.strftime("%H:%M") }} - {{ slot.end_time.strftime("%H:%M") }}</p>
+                  <form class="mt-2" method="post" action="{{ url_for('main.delete_availability', availability_id=slot.id) }}">
+                    <button class="rounded-md border border-rose-300 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50" type="submit">Supprimer</button>
+                  </form>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="mt-2 text-sm text-slate-500">Aucune disponibilite configuree.</p>
+          {% endif %}
+        </div>
+      </article>
+
+      <article class="rounded-2xl border border-teal-900/10 bg-white p-4 shadow-sm lg:col-span-9 lg:overflow-hidden">
+        <div class="mb-3 flex items-center justify-between gap-2">
+          <h2 class="text-lg font-semibold text-slate-900">Tableau des rendez-vous par statut</h2>
+          <p class="text-xs text-slate-500">Bloc `paid` verrouille (plus de changement possible)</p>
+        </div>
+
+        <div class="h-[70vh] overflow-x-auto lg:h-full">
+          <div class="grid min-w-[1100px] grid-cols-5 gap-3">
+            {% for status in status_order %}
+              {% set color = status_colors[status] %}
+              <section class="flex h-[66vh] flex-col rounded-xl border
+                {% if color == 'amber' %}border-amber-200 bg-amber-50/60
+                {% elif color == 'indigo' %}border-indigo-200 bg-indigo-50/60
+                {% elif color == 'emerald' %}border-emerald-200 bg-emerald-50/60
+                {% elif color == 'teal' %}border-teal-200 bg-teal-50/60
+                {% else %}border-rose-200 bg-rose-50/60{% endif %}">
+                <header class="sticky top-0 rounded-t-xl border-b bg-white/80 px-3 py-2 backdrop-blur">
+                  <h3 class="text-sm font-semibold text-slate-800">{{ status_labels[status] }}</h3>
+                  <p class="text-xs text-slate-500">{{ grouped_company_appointments[status]|length }} rendez-vous</p>
+                </header>
+
+                <div class="flex-1 space-y-2 overflow-y-auto p-2">
+                  {% for appointment in grouped_company_appointments[status] %}
+                    <article class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                      <p class="text-sm font-semibold text-slate-800">{{ appointment.customer_name }}</p>
+                      <p class="text-xs text-slate-500">{{ appointment.customer_email }}</p>
+                      <p class="mt-1 text-sm text-slate-700">{{ appointment.start_at.strftime("%Y-%m-%d %H:%M") }}</p>
+                      <p class="mt-1 text-xs text-slate-500">
+                        Mail rappel:
+                        {% if appointment.reminder_sent_at %}
+                          envoye le {{ appointment.reminder_sent_at.strftime("%Y-%m-%d %H:%M") }}
+                        {% else %}
+                          non envoye
+                        {% endif %}
+                      </p>
+
+                      {% if appointment.notes %}
+                        <p class="mt-1 text-xs text-slate-500">{{ appointment.notes }}</p>
+                      {% endif %}
+
+                      <div class="mt-3 space-y-2">
+                        {% if appointment.can_send_manual_reminder %}
+                          <form method="post" action="{{ url_for('main.send_appointment_mail', appointment_id=appointment.id) }}">
+                            <button class="w-full rounded-md border border-teal-300 bg-teal-50 px-2 py-1.5 text-xs font-semibold text-teal-800 hover:bg-teal-100" type="submit">
+                              {% if appointment.reminder_sent_at %}
+                                Renvoyer le mail (moins d'1h)
+                              {% else %}
+                                Envoyer le mail
+                              {% endif %}
+                            </button>
+                          </form>
+                        {% else %}
+                          <button class="w-full cursor-not-allowed rounded-md border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs font-medium text-slate-500" type="button" disabled>
+                            Mail deja envoye (renvoi possible a moins d'1h)
+                          </button>
+                        {% endif %}
+
+                        {% if appointment.status == 'paid' %}
+                          <button class="w-full cursor-not-allowed rounded-md border border-slate-200 bg-slate-100 px-2 py-1.5 text-xs font-medium text-slate-500" type="button" disabled>
+                            Statut verrouille (paid)
+                          </button>
+                        {% else %}
+                          <form class="flex gap-2" method="post" action="{{ url_for('main.update_appointment_status', appointment_id=appointment.id) }}">
+                            <select class="flex-1 rounded-md border border-slate-300 px-2 py-1.5 text-xs" name="status">
+                              {% for next_status in status_order %}
+                                <option value="{{ next_status }}" {% if next_status == appointment.status %}selected{% endif %}>{{ status_labels[next_status] }}</option>
+                              {% endfor %}
+                            </select>
+                            <button class="rounded-md bg-brand px-2 py-1.5 text-xs font-semibold text-white hover:bg-brandDark" type="submit">Valider</button>
+                          </form>
+                        {% endif %}
+                      </div>
+                    </article>
+                  {% endfor %}
+
+                  {% if grouped_company_appointments[status]|length == 0 %}
+                    <p class="rounded-lg border border-dashed border-slate-300 bg-white/60 px-3 py-2 text-xs text-slate-500">Aucun rendez-vous</p>
+                  {% endif %}
+                </div>
+              </section>
+            {% endfor %}
+          </div>
+        </div>
+      </article>
+    </section>
+  {% else %}
+    <section class="rounded-2xl border border-teal-900/10 bg-sand p-6 shadow-sm">
+      <h1 class="font-display text-4xl text-brandDark">Dashboard</h1>
+      <p class="mt-2 text-slate-600">Bienvenue {{ user.full_name }}.</p>
+      <p class="mt-3 text-sm text-slate-600">Ce dashboard Kanban est reserve aux comptes entreprise.</p>
+    </section>
+  {% endif %}
+
+  {% if user.role == "company" and company_booking_link %}
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Connexion SSE pour recevoir les changements de rendez-vous en direct.
+        const source = new EventSource("{{ url_for('main.stream_company_appointments') }}");
+
+        source.addEventListener("update", function () {
+          // Reload page pour refléter statuts, heures et envoi mail.
+          window.location.reload();
+        });
+
+        source.onerror = function () {
+          // Le navigateur retente automatiquement; on ne force pas de fermeture.
+        };
+      });
+    </script>
+  {% endif %}
+{% endblock %}
