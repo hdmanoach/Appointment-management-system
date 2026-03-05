@@ -1,6 +1,4 @@
 from pathlib import Path
-import logging
-from logging.handlers import RotatingFileHandler
 
 import click
 from flask import Flask
@@ -12,35 +10,17 @@ from .main import main_bp
 from .notifications import send_upcoming_appointment_reminders
 
 
-def _configure_logging(app: Flask) -> None:
-    """
-    Configure la journalisation applicative:
-    - sortie fichier rotatif (audit)
-    - sortie console (dev/debug)
-    """
-    log_path = Path(app.config["LOG_FILE"])
-    if not log_path.is_absolute():
-        log_path = Path(app.root_path).parent.parent / log_path
-    log_path.parent.mkdir(parents=True, exist_ok=True)
-
-    formatter = logging.Formatter(
-        "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
-    )
-
-    file_handler = RotatingFileHandler(log_path, maxBytes=1_000_000, backupCount=5)
-    file_handler.setFormatter(formatter)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-
-    app.logger.handlers.clear()
-    app.logger.addHandler(file_handler)
-    app.logger.addHandler(console_handler)
-    app.logger.setLevel(getattr(logging, app.config["LOG_LEVEL"].upper(), logging.INFO))
-
-
 def create_app(config_class=Config):
     app = Flask(__name__, instance_relative_config=True)
+    # Charger les variables d'environnement depuis .env si présentes (utile en dev/cron).
+    try:
+        # import local to avoid hard dependency when not needed
+        from dotenv import load_dotenv
+
+        load_dotenv()
+    except ImportError:
+        pass
+
     app.config.from_object(config_class)
 
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
@@ -49,7 +29,6 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     oauth.init_app(app)
     mail.init_app(app)
-    _configure_logging(app)
 
     if app.config.get("GOOGLE_CLIENT_ID") and app.config.get("GOOGLE_CLIENT_SECRET"):
         oauth.register(
