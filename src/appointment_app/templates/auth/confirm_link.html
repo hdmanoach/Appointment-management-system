@@ -10,6 +10,7 @@
     </p>
 
     <form class="mt-4 space-y-3" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase text-slate-500">Mot de passe local</label>
         <input class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" type="password" name="password" required>

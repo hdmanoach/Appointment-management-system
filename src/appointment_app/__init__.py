@@ -1,13 +1,113 @@
 from pathlib import Path
+from logging.handlers import RotatingFileHandler
+import logging
+import secrets
 
 import click
-from flask import Flask
+from flask import Flask, abort, request, session
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .auth import auth_bp
 from .config import Config
 from .extensions import db, login_manager, mail, oauth
 from .main import main_bp
 from .notifications import send_upcoming_appointment_reminders
+
+
+def _configure_logging(app: Flask) -> None:
+    """Configure des logs fichiers + console sans duplication."""
+    log_level_name = str(app.config.get("LOG_LEVEL", "INFO")).upper()
+    log_level = getattr(logging, log_level_name, logging.INFO)
+    log_file = Path(str(app.config.get("LOG_FILE", "instance/logs/app.log")))
+    if not log_file.is_absolute():
+        log_file = Path(app.root_path).parent.parent / log_file
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+
+    formatter = logging.Formatter(
+        "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
+        "%Y-%m-%d %H:%M:%S",
+    )
+    file_handler = RotatingFileHandler(
+        log_file,
+        maxBytes=5 * 1024 * 1024,
+        backupCount=5,
+        encoding="utf-8",
+    )
+    file_handler.setLevel(log_level)
+    file_handler.setFormatter(formatter)
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(log_level)
+    stream_handler.setFormatter(formatter)
+
+    app.logger.handlers.clear()
+    app.logger.setLevel(log_level)
+    app.logger.addHandler(file_handler)
+    app.logger.addHandler(stream_handler)
+    app.logger.propagate = False
+
+
+def _configure_security(app: Flask) -> None:
+    """Durcit l'application: proxy, CSRF minimal, headers HTTP."""
+
+    if app.config["SECRET_KEY"] in {"dev-secret-key", "change-this-in-production"}:
+        app.logger.warning("SECRET_KEY par defaut detecte. Remplace-le en production.")
+
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for=app.config["PROXY_FIX_X_FOR"],
+        x_proto=app.config["PROXY_FIX_X_PROTO"],
+        x_host=app.config["PROXY_FIX_X_HOST"],
+        x_port=app.config["PROXY_FIX_X_PORT"],
+        x_prefix=app.config["PROXY_FIX_X_PREFIX"],
+    )
+
+    def _csrf_token() -> str:
+        token = session.get("_csrf_token")
+        if not token:
+            token = secrets.token_urlsafe(32)
+            session["_csrf_token"] = token
+        return token
+
+    @app.context_processor
+    def inject_csrf_token():
+        return {"csrf_token": _csrf_token}
+
+    @app.before_request
+    def csrf_protect():
+        if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+            return
+        token = request.form.get("csrf_token") or request.headers.get("X-CSRF-Token")
+        session_token = session.get("_csrf_token")
+        if not token or not session_token or token != session_token:
+            abort(400, description="CSRF token missing or invalid.")
+
+    @app.after_request
+    def set_security_headers(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=()",
+        )
+        response.headers.setdefault(
+            "Content-Security-Policy",
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data:; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self'",
+        )
+        if request.is_secure:
+            response.headers.setdefault(
+                "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+            )
+        return response
 
 
 def create_app(config_class=Config):
@@ -22,6 +122,8 @@ def create_app(config_class=Config):
         pass
 
     app.config.from_object(config_class)
+    _configure_logging(app)
+    _configure_security(app)
 
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 

@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from datetime import timedelta
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -28,6 +29,35 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
     SQLALCHEMY_DATABASE_URI = _build_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    ENV = os.getenv("FLASK_ENV", "production")
+    DEBUG = os.getenv("FLASK_DEBUG", "0").lower() in ("1", "true", "yes")
+
+    # Durcissement cookies/session.
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = os.getenv("REMEMBER_COOKIE_SAMESITE", "Lax")
+    REMEMBER_COOKIE_SECURE = os.getenv("REMEMBER_COOKIE_SECURE", "false").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    PERMANENT_SESSION_LIFETIME = timedelta(
+        hours=int(os.getenv("PERMANENT_SESSION_HOURS", "12"))
+    )
+    MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", 1024 * 1024))
+
+    # Environnements de confiance reverse proxy (0 par defaut).
+    PROXY_FIX_X_FOR = int(os.getenv("PROXY_FIX_X_FOR", "0"))
+    PROXY_FIX_X_PROTO = int(os.getenv("PROXY_FIX_X_PROTO", "0"))
+    PROXY_FIX_X_HOST = int(os.getenv("PROXY_FIX_X_HOST", "0"))
+    PROXY_FIX_X_PORT = int(os.getenv("PROXY_FIX_X_PORT", "0"))
+    PROXY_FIX_X_PREFIX = int(os.getenv("PROXY_FIX_X_PREFIX", "0"))
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
     GOOGLE_SERVER_METADATA_URL = os.getenv(

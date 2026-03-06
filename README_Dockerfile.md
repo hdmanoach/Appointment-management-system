@@ -25,10 +25,11 @@ docker build -t appointment-management-system .
 Une fois l'image construite, lancez le conteneur avec la commande suivante :
 
 ```bash
-docker run -p 5000:5000 appointment-management-system
+docker run --name appointment-app --env-file .env -p 5000:5000 appointment-management-system
 ```
 
 - `-p 5000:5000` : Mappe le port 5000 du conteneur au port 5000 de votre machine hôte.
+- `--env-file .env` : Injecte les variables de configuration (SECRET_KEY, OAuth, SMTP, etc.) sans les copier dans l'image.
 - L'application sera accessible via `http://localhost:5000`.
 
 ## Variables d'environnement
@@ -65,7 +66,28 @@ Cela permet à Flask d'écouter sur toutes les interfaces réseau du conteneur.
 ## Dépannage
 
 - Si le port 5000 est déjà utilisé, changez le mapping des ports : `docker run -p 8080:5000 appointment-management-system` (accessible via `http://localhost:8080`).
-- Vérifiez les logs du conteneur avec `docker logs <container_id>` en cas d'erreur.
+- Vérifiez les logs du conteneur avec `docker logs -f appointment-app` en cas d'erreur.
+- Pour voir les logs fichier dans le conteneur :
+
+```bash
+docker exec -it appointment-app sh -c "tail -f /app/instance/logs/app.log"
+```
+
+## Sécurité appliquée dans le code
+
+- Cookies de session durcis (`HttpOnly`, `SameSite`, option `Secure` via `.env`).
+- Protection CSRF pour toutes les routes en écriture (POST/PUT/PATCH/DELETE).
+- En-têtes HTTP de sécurité ajoutés (CSP, `X-Frame-Options`, `X-Content-Type-Options`, etc.).
+- Logging applicatif rotatif (fichier + sortie console) avec niveau configurable.
+
+Variables utiles à régler dans `.env` :
+
+```env
+SESSION_COOKIE_SECURE=true
+REMEMBER_COOKIE_SECURE=true
+LOG_LEVEL=INFO
+LOG_FILE=instance/logs/app.log
+```
 
 ## Notes
 

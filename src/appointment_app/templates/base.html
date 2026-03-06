@@ -44,7 +44,10 @@
             {% if current_user.role == "client" %}
               <a class="rounded-full px-3 py-1.5 text-brandDark hover:bg-teal-50" href="{{ url_for('main.my_appointments') }}">Mes rendez-vous</a>
             {% endif %}
-            <a class="rounded-full bg-brand px-3 py-1.5 font-medium text-white hover:bg-brandDark" href="{{ url_for('auth.logout') }}">Deconnexion</a>
+            <form method="post" action="{{ url_for('auth.logout') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="rounded-full bg-brand px-3 py-1.5 font-medium text-white hover:bg-brandDark" type="submit">Deconnexion</button>
+            </form>
           {% else %}
             <a class="rounded-full px-3 py-1.5 text-brandDark hover:bg-teal-50" href="{{ url_for('auth.login') }}">Connexion</a>
             <a class="rounded-full bg-brand px-3 py-1.5 font-medium text-white hover:bg-brandDark" href="{{ url_for('auth.register') }}">Inscription</a>

@@ -385,7 +385,7 @@ def linkedin_callback():
     return _oauth_callback("linkedin", _fetch_linkedin_identity)
 
 
-@auth_bp.route("/logout")
+@auth_bp.route("/logout", methods=["POST"])
 def logout():
     if current_user.is_authenticated:
         logout_user()

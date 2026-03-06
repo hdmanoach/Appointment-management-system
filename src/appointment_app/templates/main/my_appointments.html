@@ -44,11 +44,13 @@
                       </button>
                     {% else %}
                       <form method="post" action="{{ url_for('main.reschedule_my_appointment', appointment_id=appointment.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <label class="mb-1 block text-xs font-semibold uppercase text-slate-500">Nouvelle date/heure</label>
                         <input class="mb-2 w-full rounded-md border border-slate-300 px-2 py-1.5 text-xs" type="datetime-local" name="start_at" required>
                         <button class="w-full rounded-md border border-indigo-300 bg-indigo-50 px-2 py-1.5 text-xs font-semibold text-indigo-800 hover:bg-indigo-100" type="submit">Reporter (bloc Reported)</button>
                       </form>
                       <form method="post" action="{{ url_for('main.cancel_my_appointment', appointment_id=appointment.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <button class="mt-2 w-full rounded-md border border-rose-300 bg-rose-50 px-2 py-1.5 text-xs font-semibold text-rose-800 hover:bg-rose-100" type="submit">Annuler</button>
                       </form>
                     {% endif %}
