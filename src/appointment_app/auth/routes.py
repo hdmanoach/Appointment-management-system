@@ -13,6 +13,21 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 PENDING_LINK_SESSION_KEY = "pending_oauth_link"
 
 
+def _validate_password_strength(password: str) -> tuple[bool, list[str]]:
+    """Valide des regles minimales de mot de passe fort."""
+    errors = []
+    password = str(password or "")
+
+    if len(password) < 8:
+        errors.append("Le mot de passe doit contenir au moins 8 caracteres.")
+    if not re.search(r"[a-z]", password) or not re.search(r"[A-Z]", password):
+        errors.append("Le mot de passe doit contenir au moins une minuscule et une majuscule.")
+    if not re.search(r"\d", password) or not re.search(r"[^A-Za-z0-9]", password):
+        errors.append("Le mot de passe doit contenir au moins un chiffre et un caractere special.")
+
+    return (len(errors) == 0, errors)
+
+
 def _slugify(value: str) -> str:
     """Transforme un texte en slug URL-safe (ASCII + tirets)."""
     normalized = unicodedata.normalize("NFKD", str(value or ""))
@@ -43,18 +58,29 @@ def register():
         full_name = request.form.get("full_name", "").strip()
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
         role = request.form.get("role", "client").strip().lower()
 
         if role not in {"client", "company"}:
             role = "client"
 
-        if not full_name or not email or not password:
+        if not full_name or not email or not password or not confirm_password:
             flash("Tous les champs sont obligatoires.", "error")
             return render_template("auth/register.html")
 
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             flash("Cet email est deja utilise.", "error")
+            return render_template("auth/register.html")
+
+        if password != confirm_password:
+            flash("La confirmation du mot de passe ne correspond pas.", "error")
+            return render_template("auth/register.html")
+
+        is_password_valid, password_errors = _validate_password_strength(password)
+        if not is_password_valid:
+            for error in password_errors:
+                flash(error, "error")
             return render_template("auth/register.html")
 
         user = User(full_name=full_name, email=email, role=role)

@@ -24,7 +24,24 @@
       </div>
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase text-slate-500">Mot de passe</label>
-        <input class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" type="password" name="password" required>
+        <input class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" id="password" type="password" name="password" required>
+        <p class="mt-2 text-xs text-slate-500">Utilisez un mot de passe fort.</p>
+        <div class="mt-2 grid grid-cols-3 gap-2" aria-hidden="true">
+          <span id="rule-length" class="h-2 rounded-full bg-slate-200"></span>
+          <span id="rule-case" class="h-2 rounded-full bg-slate-200"></span>
+          <span id="rule-mixed" class="h-2 rounded-full bg-slate-200"></span>
+        </div>
+        <ul class="mt-2 space-y-1 text-xs text-slate-500">
+          <li id="rule-length-text">Au moins 8 caracteres</li>
+          <li id="rule-case-text">Au moins 1 minuscule et 1 majuscule</li>
+          <li id="rule-mixed-text">Au moins 1 chiffre et 1 caractere special</li>
+        </ul>
+        <p id="password-strength-text" class="mt-2 text-xs font-semibold text-slate-500">Niveau: faible</p>
+      </div>
+      <div>
+        <label class="mb-1 block text-xs font-semibold uppercase text-slate-500">Confirmation du mot de passe</label>
+        <input class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" id="confirm_password" type="password" name="confirm_password" required>
+        <p id="confirm-password-text" class="mt-2 text-xs text-slate-500">Les mots de passe doivent correspondre.</p>
       </div>
       <div>
         <label class="mb-1 block text-xs font-semibold uppercase text-slate-500">Type de compte</label>
@@ -36,4 +53,99 @@
       <button class="w-full rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brandDark" type="submit">Creer le compte</button>
     </form>
   </section>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (function () {
+      const passwordInput = document.getElementById("password");
+      const confirmPasswordInput = document.getElementById("confirm_password");
+      if (!passwordInput || !confirmPasswordInput) {
+        return;
+      }
+
+      const strengthText = document.getElementById("password-strength-text");
+      const confirmText = document.getElementById("confirm-password-text");
+      const rules = [
+        {
+          bar: document.getElementById("rule-length"),
+          text: document.getElementById("rule-length-text"),
+          test: (value) => value.length >= 8,
+        },
+        {
+          bar: document.getElementById("rule-case"),
+          text: document.getElementById("rule-case-text"),
+          test: (value) => /[a-z]/.test(value) && /[A-Z]/.test(value),
+        },
+        {
+          bar: document.getElementById("rule-mixed"),
+          text: document.getElementById("rule-mixed-text"),
+          test: (value) => /\d/.test(value) && /[^A-Za-z0-9]/.test(value),
+        },
+      ];
+
+      function updatePasswordStrength() {
+        const value = passwordInput.value || "";
+        let score = 0;
+
+        rules.forEach((rule) => {
+          const ok = rule.test(value);
+          if (rule.bar) {
+            rule.bar.className = ok ? "h-2 rounded-full bg-emerald-500" : "h-2 rounded-full bg-slate-200";
+          }
+          if (rule.text) {
+            rule.text.className = ok ? "text-xs text-emerald-700" : "text-xs text-slate-500";
+          }
+          if (ok) {
+            score += 1;
+          }
+        });
+
+        if (strengthText) {
+          if (score <= 1) {
+            strengthText.textContent = "Niveau: faible";
+            strengthText.className = "mt-2 text-xs font-semibold text-rose-600";
+          } else if (score === 2) {
+            strengthText.textContent = "Niveau: moyen";
+            strengthText.className = "mt-2 text-xs font-semibold text-amber-600";
+          } else {
+            strengthText.textContent = "Niveau: fort";
+            strengthText.className = "mt-2 text-xs font-semibold text-emerald-700";
+          }
+        }
+      }
+
+      function updateConfirmPassword() {
+        const password = passwordInput.value || "";
+        const confirmPassword = confirmPasswordInput.value || "";
+        if (!confirmText) {
+          return;
+        }
+
+        if (!confirmPassword) {
+          confirmText.textContent = "Les mots de passe doivent correspondre.";
+          confirmText.className = "mt-2 text-xs text-slate-500";
+          return;
+        }
+
+        if (password === confirmPassword) {
+          confirmText.textContent = "Confirmation valide.";
+          confirmText.className = "mt-2 text-xs text-emerald-700";
+          return;
+        }
+
+        confirmText.textContent = "La confirmation ne correspond pas.";
+        confirmText.className = "mt-2 text-xs text-rose-600";
+      }
+
+      passwordInput.addEventListener("input", function () {
+        updatePasswordStrength();
+        updateConfirmPassword();
+      });
+      confirmPasswordInput.addEventListener("input", updateConfirmPassword);
+
+      updatePasswordStrength();
+      updateConfirmPassword();
+    })();
+  </script>
 {% endblock %}
