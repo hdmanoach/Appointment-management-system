@@ -3,8 +3,7 @@
 ## Description
 
 Ce Dockerfile permet de conteneuriser l'application **[Appointment-management-system](https://github.com/hdmanoach/Appointment-management-system)**, une application web développée avec Flask pour la gestion de rendez-vous. Il utilise une image Python légère (3.12-slim) pour optimiser la taille et les performances.
-## Projet :
-https://roadmap.sh/projects/basic-dockerfile
+
 ## Prérequis
 
 - Docker installé sur votre système.
